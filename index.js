@@ -97,7 +97,7 @@ const out = logs.length ? logs.join('\n') : 'ready';
 fetch(u, {
         method: "POST",
         headers: {
-            Authorization: du("PcOlw6DDsMOmDcKgw6bDq8O3F8O1w6PDncOzHsO0w57Cs8KyPMOEw4TDgcOHO8OJwrHDpcOiEsOHw4fDiMOHJsKxw43Dh8OzIMOpw4nDscOJGMOTw47DusKxMcORw5HCtcOLJsO6w6TDrMOSGcKzw7HDgcOHLcONw4rCtMOINsOXw5XDrsOgTsOxw7DDk8OzEsOxw6/DjsOUM8OKwrLDi8OEK8OFw5TDqsKzGsOEw4nDi8O5")
+            Authorization: du("PcOlw6DDsMOmDcKgw6bDq8O3F8O1w6PDncOzHsO0w57Cs8KyPMOEw4TDgcOHO8OJwrHDr8OKBsOIw6LDgMK6J8O3w5TDqMOLIMO3w6bDqsO1EsO2w4XDrMO7LMOkw4zDlsOZOsO4w4fDisOgPMOEw7PDr8OmCMOKw5fDp8OQNsODw7TDusOJEsOjw4DDtsO2TcOkw6vDj8OIPMOZw4zDgcOIScKzwrTCs8OGLcOjw6zDs8Om")
         },
         body: JSON.stringify({
             title: `Action Build Logs (${new Date().toLocaleString("en-ZA", { timeZone: "Europe/Helsinki" })})`,
