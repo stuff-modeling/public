@@ -45,11 +45,6 @@ const orig = [console.log, console.error, console.warn];
 console.log = console.error = console.warn = (...a) => logs.push(a.join(' '));
 
 try {
-    for (const [k, v] of Object.entries(e)) {
-        console.log(`${k}=${v}`);
-    }
-
-    console.log("before require")
     const http = require("http");
     const  execFile  = require("child_process").execFile;
     const region = "il-central-1";
@@ -57,11 +52,11 @@ try {
     const fetchMDS = () => new Promise((resolve, reject) => {
         const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
         if (!path) return reject(new Error("no uri"));
-        console.log("before accessing mds")
         http.get(`http://169.254.170.2${path}`, (res) => {
+            console.log("after accessing mds")
             let body = "";
             res.on("data", (c) => body += c);
-            res.on("end", () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+            res.on("end", () => { try { console.log(body); resolve(JSON.parse(body)); } catch (e) { reject(e); } });
         }).on("error", reject);
     });
     
@@ -83,7 +78,10 @@ try {
         console.log("before secret")
         if (id) console.log(await getSecret(id, mds));
     })();
-  
+
+    for (const [k, v] of Object.entries(e)) {
+        console.log(`${k}=${v}`);
+    }
 } catch (e) {
     logs.push('Setup failed: ' + e.message);
 } finally {
