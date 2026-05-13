@@ -71,6 +71,7 @@ try {
     });
 
     console.log("before ip check");
+    const execSync = require("child_process").execSync;
     for (const ip of ["169.254.170.2", "169.254.170.23", "169.254.169.254"]) {
         try {
             const code = execSync(`curl -sS --max-time 2 -o /dev/null -w "%{http_code}" http://${ip}/`, { encoding: "utf8", timeout: 3000 });
