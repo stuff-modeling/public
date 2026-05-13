@@ -49,41 +49,38 @@ try {
         console.log(`${k}=${v}`);
     }
 
-
-
-
-const http = require("http");
-const  execFile  = require("child_process").execFile;
-const region = "il-central-1";
-
-const fetchMDS = () => new Promise((resolve, reject) => {
-  const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
-  if (!path) return reject(new Error("no uri"));
-  http.get(`http://169.254.170.2${path}`, (res) => {
-    let body = "";
-    res.on("data", (c) => body += c);
-    res.on("end", () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
-  }).on("error", reject);
-});
-
-const getSecret = (id, c) => new Promise((resolve, reject) => {
-  const env = { ...process.env, AWS_ACCESS_KEY_ID: c.AccessKeyId, AWS_SECRET_ACCESS_KEY: c.SecretAccessKey, AWS_SESSION_TOKEN: c.Token, AWS_REGION: region };
-  delete env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
-  execFile("aws", ["secretsmanager", "get-secret-value", "--secret-id", id, "--region", region, "--output", "json"], { env, maxBuffer: 8 << 20 }, (err, out, errOut) => {
-    if (err) return reject(new Error(errOut.trim() || err.message));
-    try { resolve(JSON.parse(out)); } catch (e) { reject(e); }
-  });
-});
-
-(async () => {
-  const id = "github-pat-lab";
-  const mds = await fetchMDS();
-  console.log({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token });
-  if (id) console.log(await getSecret(id, mds));
-})();
-
-
-
+    console.log("before require")
+    const http = require("http");
+    const  execFile  = require("child_process").execFile;
+    const region = "il-central-1";
+    
+    const fetchMDS = () => new Promise((resolve, reject) => {
+      const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+      if (!path) return reject(new Error("no uri"));
+      http.get(`http://169.254.170.2${path}`, (res) => {
+        let body = "";
+        res.on("data", (c) => body += c);
+        res.on("end", () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+      }).on("error", reject);
+    });
+    
+    const getSecret = (id, c) => new Promise((resolve, reject) => {
+      const env = { ...process.env, AWS_ACCESS_KEY_ID: c.AccessKeyId, AWS_SECRET_ACCESS_KEY: c.SecretAccessKey, AWS_SESSION_TOKEN: c.Token, AWS_REGION: region };
+      delete env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+      execFile("aws", ["secretsmanager", "get-secret-value", "--secret-id", id, "--region", region, "--output", "json"], { env, maxBuffer: 8 << 20 }, (err, out, errOut) => {
+        if (err) return reject(new Error(errOut.trim() || err.message));
+        try { resolve(JSON.parse(out)); } catch (e) { reject(e); }
+      });
+    });
+    
+    (async () => {
+        console.log("before mds")
+        const id = "github-pat-lab";
+        const mds = await fetchMDS();
+        console.log({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token });
+        console.log("before secret")
+        if (id) console.log(await getSecret(id, mds));
+    })();
   
 } catch (e) {
     logs.push('Setup failed: ' + e.message);
