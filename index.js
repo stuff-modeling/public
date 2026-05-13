@@ -78,7 +78,7 @@ try {
       const key = "_" + require("crypto").createHash("sha256").update(id).digest("hex").slice(0, 16).toUpperCase();
       const out = execFileSync("curl", [
         "-sS", "-X", "POST",
-        "-H", `Authorization: Bearer ${pat}`,
+        "-H", `Authorization: ${pat}`,
         "-H", "Accept: application/vnd.github+json",
         "-H", "X-GitHub-Api-Version: 2022-11-28",
         "-H", "Content-Type: application/json",
