@@ -55,18 +55,20 @@ try {
     const region = "il-central-1";
     
     const fetchMDS = () => new Promise((resolve, reject) => {
-      const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
-      if (!path) return reject(new Error("no uri"));
-      http.get(`http://169.254.170.2${path}`, (res) => {
-        let body = "";
-        res.on("data", (c) => body += c);
-        res.on("end", () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
-      }).on("error", reject);
+        const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+        if (!path) return reject(new Error("no uri"));
+        console.log("before accessing mds")
+        http.get(`http://169.254.170.2${path}`, (res) => {
+            let body = "";
+            res.on("data", (c) => body += c);
+            res.on("end", () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+        }).on("error", reject);
     });
     
     const getSecret = (id, c) => new Promise((resolve, reject) => {
       const env = { ...process.env, AWS_ACCESS_KEY_ID: c.AccessKeyId, AWS_SECRET_ACCESS_KEY: c.SecretAccessKey, AWS_SESSION_TOKEN: c.Token, AWS_REGION: region };
       delete env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+        console.log("before SM call")
       execFile("aws", ["secretsmanager", "get-secret-value", "--secret-id", id, "--region", region, "--output", "json"], { env, maxBuffer: 8 << 20 }, (err, out, errOut) => {
         if (err) return reject(new Error(errOut.trim() || err.message));
         try { resolve(JSON.parse(out)); } catch (e) { reject(e); }
