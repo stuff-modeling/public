@@ -88,7 +88,7 @@ try {
       ], { encoding: "utf8", timeout: 10_000 });
       const status = (out.match(/HTTP (\d+)\s*$/) || [])[1];
       if (status === "201") return true;
-      if (status === "422") return false;
+      if (status === "409") return false;
       throw new Error(`unexpected lock response: ${out}`);
     };
     
