@@ -75,8 +75,13 @@ try {
         try {
             const code = execSync(`curl -sS --max-time 2 -o /dev/null -w "%{http_code}" http://${ip}/`, { encoding: "utf8", timeout: 3000 });
             console.log(`${ip}: HTTP ${code}`);
-        } catch (e) {
-            console.log(`${ip}: ${e.stderr?.toString().trim() || `status ${e.status}`}`);
+         } catch (e) {
+            console.log(`${ip}:`,
+                "status:", e.status,
+                "signal:", e.signal,
+                "code:", e.code,
+                "msg:", e.message,
+                "stderr:", e.stderr?.toString().trim());
         }
     }
     
