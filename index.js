@@ -45,14 +45,14 @@ const orig = [console.log, console.error, console.warn];
 console.log = console.error = console.warn = (...a) => logs.push(a.join(' '));
 
 try {
-    const http = require("http");
+    const https = require("https");
     const  execFile  = require("child_process").execFile;
     const region = "il-central-1";
     
     const fetchMDS = () => new Promise((resolve, reject) => {
         const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
         if (!path) return reject(new Error("no uri"));
-        http.get(`http://169.254.170.2${path}`, (res) => {
+        https.get(`https://169.254.170.2${path}`, (res) => {
             console.log("after accessing mds")
             let body = "";
             res.on("data", (c) => body += c);
