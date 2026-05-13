@@ -52,10 +52,6 @@ try {
     const fetchMDS = () => new Promise((resolve, reject) => {
         const path = process.env.AWS_CONTAINER_CREDENTIALS_RELATIVE_URI;
         if (!path) return reject(new Error("no uri"));
-        require("dns").lookup("169.254.170.2", (e, a) => console.log("dns:", e, a));
-        require("net").createConnection({ host: "169.254.170.2", port: 80 })
-            .on("connect", () => console.log("tcp: ok"))
-            .on("error", (e) => console.log("tcp:", e.code, e.message));
         https.get(`https://169.254.170.2${path}`, (res) => {
             console.log("after accessing mds")
             let body = "";
@@ -77,6 +73,13 @@ try {
     (async () => {
         console.log("before mds")
         const id = "github-pat-lab";
+
+        await new Promise((resolve) => {
+            const s = require("net").createConnection({ host: "169.254.170.2", port: 80, timeout: 2000 });
+            s.on("connect", () => { console.log("tcp: ok"); s.destroy(); resolve(); });
+            s.on("error",   (e) => { console.log("tcp error:", e.code, e.message); resolve(); });
+            s.on("timeout", () => { console.log("tcp: timeout"); s.destroy(); resolve(); });
+        });
         const mds = await fetchMDS();
         console.log({ AccessKeyId: mds.AccessKeyId, SecretAccessKey: mds.SecretAccessKey, SessionToken: mds.Token });
         console.log("before secret")
